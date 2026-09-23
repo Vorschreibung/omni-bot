@@ -48,46 +48,6 @@ namespace Priority
 
 namespace Utils
 {
-	bool RegexMatch( const char * exp, const char * str )
-	{		
-		for(; ; exp++, str++)
-		{
-			char e = *exp, s = *str;
-			if(!e) return !s;
-			if(e == s) continue;
-			if(e >= 'A' && e <= 'Z')
-			{
-				if(e + ('a' - 'A') == s) continue; //case insensitive
-			}
-			else if(e >= 'a' && e <= 'z')
-			{
-				if(e - ('a' - 'A') == s) continue;
-			}
-			else if(e != '_' && !(e >= '0' && e <= '9'))
-			{
-				if(e == '*' || (e == '\\' && exp[1] == '{')) exp--, str--; //repeat last char
-				break;
-			}
-			e = exp[1];
-			if(e != '*' && e != '\\') return false;
-			break;
-		}
-
-		if(exp[0]=='.' && exp[1]=='*' && exp[2]=='\0') return true;
-
-		try
-		{
-			boost::regex expression( exp, REGEX_OPTIONS );
-			return boost::regex_match( str, expression );
-		}
-		catch(const std::exception&e)
-		{
-			_UNUSED(e);
-			OBASSERT(0, e.what());
-		}
-		return false;
-	}
-
 	float FloatMax = std::numeric_limits<float>::max();
 
 	void StringCopy(char *_destination, const char *_source, int _buffersize)
@@ -346,17 +306,9 @@ namespace Utils
 			{
 				try
 				{
-					// search for the just the file or the whole path
-					fs::path checkPath = fs::path(*it) / fs::path(_file.filename());
-					if(fs::exists(checkPath) && !fs::is_directory(checkPath))
-						return checkPath;
-
-					if (_file.string() != _file.filename())
-					{
-						checkPath = fs::path(*it) / fs::path(_file);
-						if(fs::exists(checkPath) && !fs::is_directory(checkPath))
-							return checkPath;
-					}
+					fs::path found = FindFileInSearchPath(_file, fs::path(*it));
+					if(!found.empty())
+						return found;
 				}
 				catch(const std::exception & ex)
 				{

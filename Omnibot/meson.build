@@ -2,6 +2,7 @@ project(
     'omnibot',
     ['c', 'cpp'],
     version: '0.93',
+    meson_version: '>=1.1',
     default_options: [
         'b_staticpic=true',
         'c_std=gnu99',
@@ -10,12 +11,16 @@ project(
     ],
 )
 
-# Conan's PkgConfigDeps generator exposes every Boost component separately.
+# The current dependency provider exposes every Boost component separately.
+boost_date_time_dependency = dependency('boost-date_time', method: 'pkg-config', static: true)
+boost_filesystem_dependency = dependency('boost-filesystem', method: 'pkg-config', static: true)
+boost_regex_dependency = dependency('boost-regex', method: 'pkg-config', static: true)
+boost_system_dependency = dependency('boost-system', method: 'pkg-config', static: true)
 boost_dependencies = [
-    dependency('boost-date_time', method: 'pkg-config', static: true),
-    dependency('boost-filesystem', method: 'pkg-config', static: true),
-    dependency('boost-regex', method: 'pkg-config', static: true),
-    dependency('boost-system', method: 'pkg-config', static: true),
+    boost_date_time_dependency,
+    boost_filesystem_dependency,
+    boost_regex_dependency,
+    boost_system_dependency,
 ]
 
 common_arguments = ['-fno-strict-aliasing']
@@ -162,6 +167,8 @@ common_sources = files(
     'dependencies/physfs/platform/posix.c',
     'dependencies/physfs/platform/unix.c',
     'dependencies/physfs/platform/windows.c',
+    'Common/FileSearch.cpp',
+    'Common/RegexMatch.cpp',
     'Common/BatchBuild.cpp',
 )
 
@@ -205,3 +212,7 @@ shared_module(
     dependencies: common_dependency,
     install: false,
 )
+
+if get_option('tests')
+    subdir('tests')
+endif

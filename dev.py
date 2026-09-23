@@ -71,14 +71,16 @@ def _run_in_pixi(
     subprocess.run(invocation, cwd=ROOT, env=child_environment, check=True)
 
 
-def build_bot(*, release: bool) -> None:
-    """Build the legacy 32-bit Linux bot modules with Conan, Meson, and Zig."""
+def _configure_bot_build(*, release: bool, tests: bool) -> tuple[Path, dict[str, str]]:
+    """Configure a 32-bit Linux bot build and return its path and environment."""
     if not sys.platform.startswith("linux"):
-        raise RuntimeError("build-bot currently ports Omnibot/linux/buildbot.sh and requires Linux")
+        raise RuntimeError("32-bit bot builds currently require Linux")
 
     build_mode = "release" if release else "debug"
     conan_output = BUILD_ROOT / f"conan-{build_mode}-x86"
-    meson_build = BUILD_ROOT / f"meson-{build_mode}-x86"
+    # Tests use their own tree so enabling them never changes the bot build outputs.
+    meson_build_name = "meson-tests-x86" if tests else f"meson-{build_mode}-x86"
+    meson_build = BUILD_ROOT / meson_build_name
     # The target is part of the cache path because Conan does not include custom
     # compiler flags in its package ID.
     conan_home = BUILD_ROOT / f".conan2-glibc-{LINUX_GLIBC_VERSION}-{build_mode}"
@@ -86,6 +88,9 @@ def build_bot(*, release: bool) -> None:
     host_profile_name = "linux-x86-zig-release" if release else "linux-x86-zig"
     host_profile = OMNIBOT_SOURCE / "conan" / "profiles" / host_profile_name
     build_profile = OMNIBOT_SOURCE / "conan" / "profiles" / "linux-x86_64-zig"
+    cross_files = [conan_output / "conan_meson_cross.ini"]
+    if tests:
+        cross_files.append(OMNIBOT_SOURCE / "tests" / "x86-linux.ini")
 
     BUILD_ROOT.mkdir(parents=True, exist_ok=True)
     build_environment = {
@@ -106,16 +111,20 @@ def build_bot(*, release: bool) -> None:
         environment=build_environment,
     )
 
-    toolchain = conan_output / "conan_meson_cross.ini"
     coredata = meson_build / "meson-private" / "coredata.dat"
-    toolchain_stamp = meson_build / ".conan-meson-cross.ini"
+    configuration_stamp = meson_build / ".conan-meson-cross.ini"
+    # Cross files and the project-option schema are immutable after initial setup.
+    configuration_files = [*cross_files, OMNIBOT_SOURCE / "meson.options"]
+    configuration_state = b"\0".join(
+        path.read_bytes() for path in configuration_files
+    )
     # Meson cannot reuse a build directory left behind by a failed setup.
     if meson_build.exists() and not coredata.exists():
         shutil.rmtree(meson_build)
-    # Cross-file settings are fixed at setup time, so recreate stale build trees.
+    # Recreate build trees when setup-time configuration becomes stale.
     elif coredata.exists() and (
-        not toolchain_stamp.exists()
-        or toolchain_stamp.read_bytes() != toolchain.read_bytes()
+        not configuration_stamp.exists()
+        or configuration_stamp.read_bytes() != configuration_state
     ):
         shutil.rmtree(meson_build)
 
@@ -124,18 +133,41 @@ def build_bot(*, release: bool) -> None:
         "setup",
         str(meson_build),
         str(OMNIBOT_SOURCE),
-        f"--cross-file={toolchain}",
         "-Dc_std=gnu99",
         f"--buildtype={'release' if release else 'debugoptimized'}",
         f"-Db_ndebug={'true' if release else 'false'}",
+        f"-Dtests={'true' if tests else 'false'}",
     ]
+    setup_arguments.extend(f"--cross-file={path}" for path in cross_files)
     if coredata.exists():
         setup_arguments.append("--reconfigure")
 
     _run_in_pixi(setup_arguments, environment=build_environment)
-    toolchain_stamp.write_bytes(toolchain.read_bytes())
+    configuration_stamp.write_bytes(configuration_state)
+
+    return meson_build, build_environment
+
+
+def build_bot(*, release: bool) -> None:
+    """Build the legacy 32-bit Linux bot modules with Conan, Meson, and Zig."""
+    meson_build, build_environment = _configure_bot_build(
+        release=release,
+        tests=False,
+    )
     _run_in_pixi(
         ["meson", "compile", "-C", str(meson_build)],
+        environment=build_environment,
+    )
+
+
+def test_bot() -> None:
+    """Build and run the 32-bit Linux behavior tests through Meson."""
+    meson_build, build_environment = _configure_bot_build(
+        release=False,
+        tests=True,
+    )
+    _run_in_pixi(
+        ["meson", "test", "-C", str(meson_build), "--print-errorlogs"],
         environment=build_environment,
     )
 
@@ -152,6 +184,7 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="build optimized modules without debug information",
     )
+    subcommands.add_parser("test", help="run the 32-bit Linux behavior tests")
     return parser
 
 
@@ -160,6 +193,8 @@ def main() -> None:
     arguments = _parser().parse_args()
     if arguments.command == "build-bot":
         build_bot(release=arguments.release)
+    elif arguments.command == "test":
+        test_bot()
 
 
 if __name__ == "__main__":

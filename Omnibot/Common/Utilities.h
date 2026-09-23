@@ -116,6 +116,8 @@ namespace Utils
 	// function: FindFile
 	//		Finds a file in the PATH of the system.
 	fs::path FindFile(const fs::path &_file);
+	// Search one PATH entry, preferring the bare filename before its supplied subpath.
+	fs::path FindFileInSearchPath(const fs::path &_file, const fs::path &_searchPath);
 
 	fs::path GetModFolder();
 	// function: GetNavFolder
