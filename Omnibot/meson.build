@@ -6,7 +6,7 @@ project(
     default_options: [
         'b_staticpic=true',
         'c_std=gnu99',
-        'cpp_std=c++11',
+        'cpp_std=c++17',
         'warning_level=0',
     ],
 )
@@ -30,6 +30,8 @@ endif
 add_project_arguments(common_arguments, language: ['c', 'cpp'])
 # Omni-bot intentionally embeds its build timestamp in IGame::GetVersion().
 add_project_arguments('-Wno-date-time', language: 'cpp')
+# Vendored GameMonkey sources still use the register keyword removed in C++17.
+add_project_arguments('-Wno-register', language: 'cpp')
 
 physfs_c_arguments = []
 if host_machine.system() == 'linux'

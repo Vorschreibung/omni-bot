@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <algorithm>
+#include <iterator>
 
 #include "Trajectory.h"
 
@@ -37,6 +39,18 @@ namespace Priority
 //		Contains various utilities that may be useful throughout the bot.
 namespace Utils
 {
+	// Preserve the rand()-based shuffling used by std::random_shuffle before C++17.
+	template <typename RandomAccessIterator>
+	void RandomShuffle(RandomAccessIterator _first, RandomAccessIterator _last)
+	{
+		typename std::iterator_traits<RandomAccessIterator>::difference_type remaining = _last - _first;
+		while(remaining > 1)
+		{
+			--remaining;
+			std::iter_swap(_first + remaining, _first + (std::rand() % (remaining + 1)));
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////
 	extern float FloatMax;
 	//////////////////////////////////////////////////////////////////////////

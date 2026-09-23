@@ -3,7 +3,7 @@ cmake_policy(SET CMP0091 NEW)
 
 project(Omnibot)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 99)
 
 macro(add_cxx_flag flag)
@@ -55,7 +55,8 @@ target_link_libraries(omni-shared INTERFACE Boost::boost Boost::filesystem Boost
 target_include_directories(omni-shared INTERFACE "${DEPENDENCIES_PATH}/WildMagic5/SDK/include")
 
 if (NOT WIN32)
-    add_compile_options(-Wall -Wno-deprecated -fno-strict-aliasing)
+    # Vendored GameMonkey sources still use the register keyword removed in C++17.
+    add_compile_options(-Wall -Wno-deprecated -Wno-register -fno-strict-aliasing)
 endif ()
 add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
 

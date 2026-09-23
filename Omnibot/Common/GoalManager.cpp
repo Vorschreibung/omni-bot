@@ -432,7 +432,7 @@ void GoalManager::Query::OnQueryFinish()
 					IndexPriorityList::iterator upper = std::upper_bound(
 						it, list.end(), (*it).second, IndexPriorityGreaterThan());
 
-					std::random_shuffle(it, upper);
+					Utils::RandomShuffle(it, upper);
 					it = upper;
 				}
 					
@@ -450,7 +450,7 @@ void GoalManager::Query::OnQueryFinish()
 			std::sort(m_List.begin(), m_List.end(), _GoalPriorityNameLT);
 			break;
 		case SORT_RANDOM_FULL:
-			std::random_shuffle(m_List.begin(), m_List.end());
+			Utils::RandomShuffle(m_List.begin(), m_List.end());
 			break;
 		case SORT_NAME:
 			std::sort(m_List.begin(), m_List.end(), _GoalNameLT);

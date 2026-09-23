@@ -92,7 +92,7 @@ NamePtr NameManager::GetName(const String &_preferred)
 
 	if(!lst.empty())
 	{
-		std::random_shuffle(lst.begin(), lst.end());
+		Utils::RandomShuffle(lst.begin(), lst.end());
 		return GetName(lst.front());
 	}
 

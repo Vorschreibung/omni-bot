@@ -38,7 +38,8 @@ rule os-requirements ( properties * )
 	}
 	else
 	{
-		result = <cxxflags>-std=c++11 <cflags>-fno-strict-aliasing ;
+		# GameMonkey still uses the register keyword removed in C++17.
+		result = <cxxflags>"-std=c++17 -Wno-register" <cflags>-fno-strict-aliasing ;
 		if <address-model>64 in $(properties)
 		{
 			result += <cflags>-fPIC ;
