@@ -11,21 +11,11 @@ project(
     ],
 )
 
-# The current dependency provider exposes every Boost component separately.
-boost_date_time_dependency = dependency('boost-date_time', method: 'pkg-config', static: true)
-boost_headers_dependency = dependency('boost-headers', method: 'pkg-config', static: true)
-boost_system_dependency = dependency('boost-system', method: 'pkg-config', static: true)
 # Standalone mode makes the vendored Boost.Regex implementation header-only.
 boost_regex_dependency = declare_dependency(
     include_directories: include_directories('dependencies/boost-regex/include'),
     compile_args: '-DBOOST_REGEX_STANDALONE',
 )
-boost_dependencies = [
-    boost_date_time_dependency,
-    boost_headers_dependency,
-    boost_regex_dependency,
-    boost_system_dependency,
-]
 
 common_arguments = ['-fno-strict-aliasing']
 if host_machine.system() == 'linux'
@@ -36,6 +26,11 @@ add_project_arguments(common_arguments, language: ['c', 'cpp'])
 add_project_arguments('-Wno-date-time', language: 'cpp')
 # Vendored GameMonkey sources still use the register keyword removed in C++17.
 add_project_arguments('-Wno-register', language: 'cpp')
+if get_option('buildtype') == 'release'
+    # Keep debug data out of Zig's compiler and runtime objects in release builds.
+    add_project_arguments('-g0', language: ['c', 'cpp'])
+    add_project_link_arguments('-Wl,--strip-debug', language: ['c', 'cpp'])
+endif
 
 physfs_c_arguments = []
 if host_machine.system() == 'linux'
@@ -182,7 +177,7 @@ common_library = static_library(
     'omnibot-common',
     common_sources,
     include_directories: omnibot_includes,
-    dependencies: boost_dependencies,
+    dependencies: boost_regex_dependency,
     c_args: [
         '-DPHYSFS_SUPPORTS_ZIP=1',
         '-DPHYSFS_SUPPORTS_7Z=1',
@@ -199,7 +194,7 @@ common_library = static_library(
 common_dependency = declare_dependency(
     include_directories: omnibot_includes,
     link_with: common_library,
-    dependencies: boost_dependencies,
+    dependencies: boost_regex_dependency,
 )
 
 # The empty prefix and default platform suffix reproduce b2's module names on 32-bit Linux.

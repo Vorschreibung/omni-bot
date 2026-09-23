@@ -16,7 +16,6 @@ ROOT = Path(__file__).resolve().parent
 PIXI_MANIFEST = ROOT / "pixi.toml"
 OMNIBOT_SOURCE = ROOT / "Omnibot"
 BUILD_ROOT = OMNIBOT_SOURCE / "build"
-LINUX_GLIBC_VERSION = "2.3"
 
 
 def _is_project_pixi_environment() -> bool:
@@ -77,42 +76,21 @@ def _configure_bot_build(*, release: bool, tests: bool) -> tuple[Path, dict[str,
         raise RuntimeError("32-bit bot builds currently require Linux")
 
     build_mode = "release" if release else "debug"
-    conan_output = BUILD_ROOT / f"conan-{build_mode}-x86"
     # Tests use their own tree so enabling them never changes the bot build outputs.
     meson_build_name = "meson-tests-x86" if tests else f"meson-{build_mode}-x86"
     meson_build = BUILD_ROOT / meson_build_name
-    # The target is part of the cache path because Conan does not include custom
-    # compiler flags in its package ID.
-    conan_home = BUILD_ROOT / f".conan2-glibc-{LINUX_GLIBC_VERSION}-{build_mode}"
     zig_cache = BUILD_ROOT / ".zig-cache"
-    host_profile_name = "linux-x86-zig-release" if release else "linux-x86-zig"
-    host_profile = OMNIBOT_SOURCE / "conan" / "profiles" / host_profile_name
-    build_profile = OMNIBOT_SOURCE / "conan" / "profiles" / "linux-x86_64-zig"
-    cross_files = [conan_output / "conan_meson_cross.ini"]
+    cross_files = [OMNIBOT_SOURCE / "meson" / "zig-x86-linux.ini"]
     if tests:
         cross_files.append(OMNIBOT_SOURCE / "tests" / "x86-linux.ini")
 
     BUILD_ROOT.mkdir(parents=True, exist_ok=True)
     build_environment = {
-        "CONAN_HOME": str(conan_home),
         "ZIG_GLOBAL_CACHE_DIR": str(zig_cache),
     }
 
-    _run_in_pixi(
-        [
-            "conan",
-            "install",
-            str(OMNIBOT_SOURCE),
-            f"--output-folder={conan_output}",
-            f"--profile:host={host_profile}",
-            f"--profile:build={build_profile}",
-            "--build=missing",
-        ],
-        environment=build_environment,
-    )
-
     coredata = meson_build / "meson-private" / "coredata.dat"
-    configuration_stamp = meson_build / ".conan-meson-cross.ini"
+    configuration_stamp = meson_build / ".meson-configuration"
     # Cross files and the project-option schema are immutable after initial setup.
     configuration_files = [*cross_files, OMNIBOT_SOURCE / "meson.options"]
     configuration_state = b"\0".join(
@@ -149,7 +127,7 @@ def _configure_bot_build(*, release: bool, tests: bool) -> tuple[Path, dict[str,
 
 
 def build_bot(*, release: bool) -> None:
-    """Build the legacy 32-bit Linux bot modules with Conan, Meson, and Zig."""
+    """Build the legacy 32-bit Linux bot modules with Meson and Zig."""
     meson_build, build_environment = _configure_bot_build(
         release=release,
         tests=False,
