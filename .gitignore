@@ -3,13 +3,12 @@
 .vscode/
 .vs/
 *.vcxproj.user
-/0.83/Omnibot/build/
-/0.83/Omnibot/projects/msvc12/build/
-/0.83/GameInterfaces/*/src/build/
-/0.83/Installer/Files/rtcw/scripts/rtcw_autoexec_user.gm
-/0.83/Omnibot/CMakeFiles
-/0.83/Omnibot/CMakeCache.txt
+/Omnibot/build/
+/Omnibot/projects/msvc12/build/
+/GameInterfaces/*/src/build/
+/Installer/Files/rtcw/scripts/rtcw_autoexec_user.gm
+/Omnibot/CMakeFiles
+/Omnibot/CMakeCache.txt
 # pixi environments
 .pixi/*
 !.pixi/config.toml
-/Omnibot/build/
