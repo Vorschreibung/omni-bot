@@ -1,0 +1,16 @@
+[workspace]
+authors = ["Vorschreibung <vorschreibung@gmail.com>"]
+channels = ["conda-forge"]
+name = "omni-bot"
+platforms = ["linux-64", "osx-64", "win-64"]
+version = "0.1.0"
+
+[tasks]
+"dev" = { cmd = ["python", "./dev.py"] }
+
+[dependencies]
+# "boost" = "1.85.*"
+"meson" = "1.12.1.*"
+"zig" = "0.16.0.*"
+"conan" = "2.32.0.*"
+"pkg-config" = "0.29.2.*"

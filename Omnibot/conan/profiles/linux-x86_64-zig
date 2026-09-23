@@ -1,0 +1,22 @@
+{% set zig_cc = os.getenv("ZIG_CC") %}
+{% set zig_cxx = os.getenv("ZIG_CXX") %}
+{% set zig_ar = os.getenv("ZIG_AR") %}
+{% set zig_ranlib = os.getenv("ZIG_RANLIB") %}
+
+[settings]
+os=Linux
+arch=x86_64
+build_type=Release
+compiler=clang
+compiler.version=21
+compiler.cppstd=11
+compiler.libcxx=libc++
+
+[conf]
+# Build-context tools also use the Zig frontend supplied by Pixi.
+tools.build:compiler_executables={'c': '{{ zig_cc }}', 'cpp': '{{ zig_cxx }}'}
+tools.gnu:pkg_config=pkg-config
+
+[buildenv]
+AR={{ zig_ar }}
+RANLIB={{ zig_ranlib }}
