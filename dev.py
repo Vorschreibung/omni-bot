@@ -70,16 +70,18 @@ def _run_in_pixi(
     subprocess.run(invocation, cwd=ROOT, env=child_environment, check=True)
 
 
-def build_bot() -> None:
+def build_bot(*, release: bool) -> None:
     """Build the legacy 32-bit Linux bot modules with Conan, Meson, and Zig."""
     if not sys.platform.startswith("linux"):
         raise RuntimeError("build-bot currently ports Omnibot/linux/buildbot.sh and requires Linux")
 
-    conan_output = BUILD_ROOT / "conan-release-x86"
-    meson_build = BUILD_ROOT / "meson-release-x86"
-    conan_home = BUILD_ROOT / ".conan2"
+    build_mode = "release" if release else "debug"
+    conan_output = BUILD_ROOT / f"conan-{build_mode}-x86"
+    meson_build = BUILD_ROOT / f"meson-{build_mode}-x86"
+    conan_home = BUILD_ROOT / (".conan2-release" if release else ".conan2")
     zig_cache = BUILD_ROOT / ".zig-cache"
-    host_profile = OMNIBOT_SOURCE / "conan" / "profiles" / "linux-x86-zig"
+    host_profile_name = "linux-x86-zig-release" if release else "linux-x86-zig"
+    host_profile = OMNIBOT_SOURCE / "conan" / "profiles" / host_profile_name
     build_profile = OMNIBOT_SOURCE / "conan" / "profiles" / "linux-x86_64-zig"
 
     BUILD_ROOT.mkdir(parents=True, exist_ok=True)
@@ -103,8 +105,15 @@ def build_bot() -> None:
 
     toolchain = conan_output / "conan_meson_cross.ini"
     coredata = meson_build / "meson-private" / "coredata.dat"
+    toolchain_stamp = meson_build / ".conan-meson-cross.ini"
     # Meson cannot reuse a build directory left behind by a failed setup.
     if meson_build.exists() and not coredata.exists():
+        shutil.rmtree(meson_build)
+    # Cross-file settings are fixed at setup time, so recreate stale build trees.
+    elif coredata.exists() and (
+        not toolchain_stamp.exists()
+        or toolchain_stamp.read_bytes() != toolchain.read_bytes()
+    ):
         shutil.rmtree(meson_build)
 
     setup_arguments = [
@@ -114,11 +123,14 @@ def build_bot() -> None:
         str(OMNIBOT_SOURCE),
         f"--cross-file={toolchain}",
         "-Dc_std=gnu99",
+        f"--buildtype={'release' if release else 'debugoptimized'}",
+        f"-Db_ndebug={'true' if release else 'false'}",
     ]
     if coredata.exists():
         setup_arguments.append("--reconfigure")
 
     _run_in_pixi(setup_arguments, environment=build_environment)
+    toolchain_stamp.write_bytes(toolchain.read_bytes())
     _run_in_pixi(
         ["meson", "compile", "-C", str(meson_build)],
         environment=build_environment,
@@ -129,7 +141,14 @@ def _parser() -> argparse.ArgumentParser:
     """Create the command-line parser."""
     parser = argparse.ArgumentParser(description=__doc__)
     subcommands = parser.add_subparsers(dest="command", required=True)
-    subcommands.add_parser("build-bot", help="build the 32-bit Linux bot modules")
+    build_bot_parser = subcommands.add_parser(
+        "build-bot", help="build the 32-bit Linux bot modules"
+    )
+    build_bot_parser.add_argument(
+        "--release",
+        action="store_true",
+        help="build optimized modules without debug information",
+    )
     return parser
 
 
@@ -137,7 +156,7 @@ def main() -> None:
     """Dispatch the requested development command."""
     arguments = _parser().parse_args()
     if arguments.command == "build-bot":
-        build_bot()
+        build_bot(release=arguments.release)
 
 
 if __name__ == "__main__":
