@@ -11,7 +11,7 @@ regex_test = executable(
     'regex_test.cpp',
     '../Common/RegexMatch.cpp',
     include_directories: omnibot_includes,
-    dependencies: boost_regex_dependency,
+    dependencies: [boost_headers_dependency, boost_regex_dependency],
 )
 
 test('filesystem behavior', filesystem_test)

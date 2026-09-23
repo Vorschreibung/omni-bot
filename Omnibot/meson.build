@@ -14,8 +14,12 @@ project(
 # The current dependency provider exposes every Boost component separately.
 boost_date_time_dependency = dependency('boost-date_time', method: 'pkg-config', static: true)
 boost_headers_dependency = dependency('boost-headers', method: 'pkg-config', static: true)
-boost_regex_dependency = dependency('boost-regex', method: 'pkg-config', static: true)
 boost_system_dependency = dependency('boost-system', method: 'pkg-config', static: true)
+# Standalone mode makes the vendored Boost.Regex implementation header-only.
+boost_regex_dependency = declare_dependency(
+    include_directories: include_directories('dependencies/boost-regex/include'),
+    compile_args: '-DBOOST_REGEX_STANDALONE',
+)
 boost_dependencies = [
     boost_date_time_dependency,
     boost_headers_dependency,
