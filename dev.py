@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parent
 PIXI_MANIFEST = ROOT / "pixi.toml"
 OMNIBOT_SOURCE = ROOT / "Omnibot"
 BUILD_ROOT = OMNIBOT_SOURCE / "build"
+LINUX_GLIBC_VERSION = "2.3"
 
 
 def _is_project_pixi_environment() -> bool:
@@ -78,7 +79,9 @@ def build_bot(*, release: bool) -> None:
     build_mode = "release" if release else "debug"
     conan_output = BUILD_ROOT / f"conan-{build_mode}-x86"
     meson_build = BUILD_ROOT / f"meson-{build_mode}-x86"
-    conan_home = BUILD_ROOT / (".conan2-release" if release else ".conan2")
+    # The target is part of the cache path because Conan does not include custom
+    # compiler flags in its package ID.
+    conan_home = BUILD_ROOT / f".conan2-glibc-{LINUX_GLIBC_VERSION}-{build_mode}"
     zig_cache = BUILD_ROOT / ".zig-cache"
     host_profile_name = "linux-x86-zig-release" if release else "linux-x86-zig"
     host_profile = OMNIBOT_SOURCE / "conan" / "profiles" / host_profile_name

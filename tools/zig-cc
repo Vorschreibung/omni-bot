@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-"""Run Zig's C driver while normalizing Boost.Build's x86 target name."""
+"""Run Zig's C driver with Omni-bot's pinned 32-bit Linux target."""
 
 import os
 import sys
 
 
 def main() -> None:
-    """Replace Clang's i386 spelling with the equivalent Zig target."""
+    """Replace Clang's i386 spelling with the pinned Zig/glibc target."""
     driver = os.environ["ZIG_CC"]
     arguments = [
-        "--target=x86-linux-gnu" if argument == "--target=i386-pc-linux" else argument
+        "--target=x86-linux-gnu.2.3"
+        if argument == "--target=i386-pc-linux"
+        else argument
         for argument in sys.argv[1:]
     ]
     os.execv(driver, [driver, *arguments])

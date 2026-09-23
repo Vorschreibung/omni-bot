@@ -15,10 +15,12 @@ compiler.libcxx=libc++
 [conf]
 # Conan describes Zig's Clang-compatible frontend as Clang while selecting Zig's executables explicitly.
 tools.build:compiler_executables={'c': '{{ zig_cc }}', 'cpp': '{{ zig_cxx }}'}
-tools.build:cflags=['--target=x86-linux-gnu']
-tools.build:cxxflags=['--target=x86-linux-gnu']
-tools.build:sharedlinkflags=['--target=x86-linux-gnu']
-tools.build:exelinkflags=['--target=x86-linux-gnu']
+tools.build:cflags=['--target=x86-linux-gnu.2.3']
+tools.build:cxxflags=['--target=x86-linux-gnu.2.3']
+tools.build:sharedlinkflags=['--target=x86-linux-gnu.2.3']
+tools.build:exelinkflags=['--target=x86-linux-gnu.2.3']
+# Boost.Filesystem otherwise detects a kernel syscall unavailable through glibc 2.3.
+tools.build:defines=['BOOST_FILESYSTEM_DISABLE_GETRANDOM']
 tools.gnu:pkg_config=pkg-config
 
 [buildenv]
