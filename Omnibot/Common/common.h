@@ -48,6 +48,7 @@
 #include <set>
 #include <memory>
 #include <fstream>
+#include <filesystem>
 //#include <strstream>
 #include <sstream>
 #include <limits>
@@ -102,8 +103,6 @@ namespace stdext
 #	pragma warning(disable : 4100 4244 4265 26135 26160 26400 26401 26415 26418 26451 26457 26471 26472 26473 26476 26490 26491 26496 26814 28182 33010)
 #endif
 
-#include <boost/filesystem/operations.hpp>
-#include <boost/filesystem/path.hpp>
 #include <boost/static_assert.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/shared_ptr.hpp>
@@ -128,7 +127,7 @@ namespace stdext
 #pragma warning( default: 4711 )	// function '...' selected for automatic inline expansion
 #endif
 
-namespace fs = boost::filesystem;
+namespace fs = std::filesystem;
 
 #ifdef ENABLE_FILE_DOWNLOADER
 // typedef: Thread

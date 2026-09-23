@@ -411,11 +411,7 @@ void FileDownloader::UpdateAllWaypoints(bool _getnew)
 	FileSystem::FindAllFiles("nav/", navFiles, ".*.way");
 	for(obuint32 i = 0; i < navFiles.size(); ++i)
 	{
-		const String &mapname = navFiles[i].stem()
-#if BOOST_FILESYSTEM_VERSION > 2
-			.string()
-#endif
-		;
+		const String mapname = navFiles[i].stem().string();
 		maplist.push_back(mapname);
 	}
 	g_MasterThreadGroup.create_thread(AsIOThread(maplist,gGameAbbrev,gNavFileVersion));

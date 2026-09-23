@@ -1,8 +1,10 @@
 #include "common.h"
 
+#include <chrono>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <stdexcept>
 
 namespace
 {
@@ -20,15 +22,17 @@ namespace
 	{
 	public:
 		TemporaryDirectory()
-			: m_Path(fs::temp_directory_path() / fs::unique_path("omnibot-%%%%-%%%%"))
+			: m_Path(CreatePath())
 		{
-			fs::create_directories(m_Path / "nested");
+			std::error_code error;
+			if(!fs::create_directories(m_Path / "nested", error) || error)
+				throw std::runtime_error("failed to create temporary test directory");
 		}
 
 		~TemporaryDirectory()
 		{
 			// Cleanup must not hide a test result if the filesystem refuses removal.
-			boost::system::error_code ignoredError;
+			std::error_code ignoredError;
 			fs::remove_all(m_Path, ignoredError);
 		}
 
@@ -38,6 +42,15 @@ namespace
 		}
 
 	private:
+		static fs::path CreatePath()
+		{
+			// The timestamp replaces Boost.Filesystem's non-standard unique_path helper.
+			const long long timestamp = std::chrono::steady_clock::now()
+				.time_since_epoch()
+				.count();
+			return fs::temp_directory_path() / ("omnibot-" + std::to_string(timestamp));
+		}
+
 		fs::path m_Path;
 	};
 

@@ -9,7 +9,7 @@ namespace Utils
 		if(fs::exists(checkPath) && !fs::is_directory(checkPath))
 			return checkPath;
 
-		if(_file.string() != _file.filename())
+		if(_file != _file.filename())
 		{
 			checkPath = _searchPath / _file;
 			if(fs::exists(checkPath) && !fs::is_directory(checkPath))

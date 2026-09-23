@@ -20,8 +20,6 @@ tools.build:cxxflags=['--target=x86-linux-gnu.2.3', '-g0']
 # Zig's bundled runtime objects contain DWARF, so discard it during release links.
 tools.build:sharedlinkflags=['--target=x86-linux-gnu.2.3', '-Wl,--strip-debug']
 tools.build:exelinkflags=['--target=x86-linux-gnu.2.3', '-Wl,--strip-debug']
-# Boost.Filesystem otherwise detects a kernel syscall unavailable through glibc 2.3.
-tools.build:defines=['BOOST_FILESYSTEM_DISABLE_GETRANDOM']
 tools.gnu:pkg_config=pkg-config
 
 [buildenv]

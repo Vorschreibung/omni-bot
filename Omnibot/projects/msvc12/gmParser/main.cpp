@@ -42,7 +42,7 @@ int main(int argc,const char **argv)
 		ERROR_RETURN;
 	}
 
-	if(!FileSystem::SetWriteDirectory(fs::path(FolderIn,fs::native)))
+	if(!FileSystem::SetWriteDirectory(fs::path(FolderIn)))
 	{
 		std::cout << "Unable to Set Write Folder." << std::endl;
 		ERROR_RETURN;

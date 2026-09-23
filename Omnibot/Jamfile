@@ -53,18 +53,16 @@ rule os-requirements ( properties * )
 }
 
 # define external libs
-lib boost_filesystem : : <file>$(BOOST_LIB)/libboost_filesystem$(BOOST_SUFFIX).a ;
 lib boost_regex : : <file>$(BOOST_LIB)/libboost_regex$(BOOST_SUFFIX).a ;
 lib boost_date_time : : <file>$(BOOST_LIB)/libboost_date_time$(BOOST_SUFFIX).a ;
 lib boost_system : : <file>$(BOOST_LIB)/libboost_system$(BOOST_SUFFIX).a ;
 
-lib boost_filesystem : : <target-os>windows <file>$(BOOST_LIB)/libboost_filesystem$(BOOST_SUFFIX).lib ;
 lib boost_regex : : <target-os>windows <file>$(BOOST_LIB)/libboost_regex$(BOOST_SUFFIX).lib ;
 lib boost_date_time : : <target-os>windows <file>$(BOOST_LIB)/libboost_date_time$(BOOST_SUFFIX).lib ;
 lib boost_system : : <target-os>windows <file>$(BOOST_LIB)/libboost_system$(BOOST_SUFFIX).lib ;
 
 # define alias for convenience and to force static linking
-alias boost_all : boost_filesystem boost_regex boost_date_time boost_system : <link>static ;
+alias boost_all : boost_regex boost_date_time boost_system : <link>static ;
 
 # target suffix
 rule tag ( name : type ? : property-set )

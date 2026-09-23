@@ -104,11 +104,7 @@ void PathPlannerBase::cmdResaveNav(const StringVector &_args)
 	FileSystem::FindAllFiles("nav/", wpFiles, va( ".*%s", _GetNavFileExtension().c_str() ).c_str() );
 	for(obuint32 i = 0; i < wpFiles.size(); ++i)
 	{
-		const String &mapname = wpFiles[i].stem()
-#if BOOST_FILESYSTEM_VERSION > 2
-			.string()
-#endif
-		;
+		const String mapname = wpFiles[i].stem().string();
 		bool bGood = false;
 		if(Load(mapname))
 		{

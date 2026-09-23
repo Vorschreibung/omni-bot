@@ -49,8 +49,8 @@ if (WIN32)
 else ()
     set(Boost_USE_STATIC_RUNTIME    OFF)
 endif ()
-find_package(Boost COMPONENTS system filesystem regex date_time REQUIRED)
-target_link_libraries(omni-shared INTERFACE Boost::boost Boost::filesystem Boost::regex Boost::date_time)
+find_package(Boost COMPONENTS system regex date_time REQUIRED)
+target_link_libraries(omni-shared INTERFACE Boost::boost Boost::regex Boost::date_time)
 
 target_include_directories(omni-shared INTERFACE "${DEPENDENCIES_PATH}/WildMagic5/SDK/include")
 

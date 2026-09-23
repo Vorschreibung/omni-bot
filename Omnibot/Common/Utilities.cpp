@@ -290,7 +290,7 @@ namespace Utils
 				return _file.filename();
 
 			// Look for the file using the full provided path, if it differs from just the filename
-			if((_file.string() != _file.filename()) && fs::exists(_file))
+			if((_file != _file.filename()) && fs::exists(_file))
 				return _file;
 
 			// Look in the system path for the file.

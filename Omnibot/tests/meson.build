@@ -3,7 +3,7 @@ filesystem_test = executable(
     'filesystem_test.cpp',
     '../Common/FileSearch.cpp',
     include_directories: omnibot_includes,
-    dependencies: [boost_filesystem_dependency, boost_system_dependency],
+    dependencies: boost_headers_dependency,
 )
 
 regex_test = executable(
