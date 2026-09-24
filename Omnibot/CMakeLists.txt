@@ -1,10 +1,12 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.24)
 cmake_policy(SET CMP0091 NEW)
 
-project(Omnibot)
+project(Omnibot VERSION 0.93 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
 macro(add_cxx_flag flag)
     message(STATUS "Configure with flag '${flag}'")
@@ -18,7 +20,6 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 option(OMNIBOT_ET "Build the Enemy Territory bots module" ON)
 option(OMNIBOT_RTCW "Build the Return to Castle Wolfenstein bots module" ON)
-option(OMNIBOT_STATIC_BOOST "Use static linked boost libraries" ON)
 
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSTEM_PROCESSOR_LOWER)
 if (APPLE)
@@ -39,18 +40,30 @@ set(DEPENDENCIES_PATH "${CMAKE_SOURCE_DIR}/dependencies")
 
 add_library(omni-shared INTERFACE)
 
-set(Boost_USE_STATIC_LIBS        ${OMNIBOT_STATIC_BOOST})  # only find static libs
-set(Boost_USE_DEBUG_LIBS         OFF)  # ignore debug libs and
-set(Boost_USE_RELEASE_LIBS       ON)  # only find release libs
-set(Boost_USE_MULTITHREADED      ON)
-
-if (WIN32)
-    set(Boost_USE_STATIC_RUNTIME    ON)
-else ()
-    set(Boost_USE_STATIC_RUNTIME    OFF)
-endif ()
-find_package(Boost COMPONENTS system filesystem regex date_time REQUIRED)
-target_link_libraries(omni-shared INTERFACE Boost::boost Boost::filesystem Boost::regex Boost::date_time)
+# Fetch one reproducible Boost source tree and build only the libraries used by
+# Omni-bot. Header-only dependencies are discovered by Boost's CMake project.
+include(FetchContent)
+set(BUILD_SHARED_LIBS OFF)
+set(BOOST_INCLUDE_LIBRARIES filesystem regex date_time system)
+set(BOOST_RUNTIME_LINK static)
+set(BOOST_SKIP_INSTALL_RULES ON)
+FetchContent_Declare(
+    Boost
+    URL https://github.com/boostorg/boost/releases/download/boost-1.92.0/boost-1.92.0-cmake.tar.gz
+    URL_HASH SHA256=f51707c27359a0df0cac1beada86de31bb5eed5e8285592dadec384df99c2984
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(Boost)
+target_link_libraries(
+    omni-shared
+    INTERFACE
+        Boost::headers
+        Boost::filesystem
+        Boost::regex
+        Boost::date_time
+        Boost::system
+)
+target_compile_definitions(omni-shared INTERFACE BOOST_ALL_NO_LIB)
 
 target_include_directories(omni-shared INTERFACE "${DEPENDENCIES_PATH}/WildMagic5/SDK/include")
 
