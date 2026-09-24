@@ -23,6 +23,10 @@ BUILD_ROOT = Path(
 ).resolve()
 ZIG_TOOLCHAIN = OMNIBOT_SOURCE / "cmake" / "zig-toolchain.cmake"
 RELEASE_FILES = ROOT / "Installer" / "Files" / "rtcw"
+# Tests and automation can redirect packaging away from the working tree.
+DIST_DIRECTORY = Path(
+    os.environ.get("OMNIBOT_DIST_DIRECTORY", ROOT / "dist")
+).resolve()
 
 
 @dataclass(frozen=True)
@@ -82,6 +86,11 @@ ALL_BOT_TARGETS = (
         zig_target="x86_64-windows-gnu",
         output_name="omnibot_et_x64.dll",
     ),
+)
+DIST_FILES = (
+    "README.txt",
+    "changelog.txt",
+    *(target.output_name for target in ALL_BOT_TARGETS),
 )
 
 
@@ -334,6 +343,30 @@ def build_bot(*, release: bool, build_all: bool = False) -> None:
     )
 
 
+def dist() -> None:
+    """Copy an existing all-platform release build into the distribution tree."""
+    built_release = BUILD_ROOT / "omnibot-release"
+    missing = [name for name in DIST_FILES if not (built_release / name).is_file()]
+    if missing:
+        missing_files = ", ".join(missing)
+        raise RuntimeError(
+            f"release artifacts are missing: {missing_files}; "
+            "run './dev.py build-bot --all --release' first"
+        )
+
+    if DIST_DIRECTORY.is_symlink() or (
+        DIST_DIRECTORY.exists() and not DIST_DIRECTORY.is_dir()
+    ):
+        raise RuntimeError(f"distribution path is not a directory: {DIST_DIRECTORY}")
+    if DIST_DIRECTORY.exists():
+        # Recreate the package so stale artifacts cannot leak into a release.
+        shutil.rmtree(DIST_DIRECTORY)
+    DIST_DIRECTORY.mkdir(parents=True)
+    for name in DIST_FILES:
+        shutil.copy2(built_release / name, DIST_DIRECTORY / name)
+    print(f"Distribution is in {DIST_DIRECTORY}")
+
+
 def _parser() -> argparse.ArgumentParser:
     """Create the command-line parser."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -352,6 +385,9 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="build optimized modules without debug information",
     )
+    subcommands.add_parser(
+        "dist", help="copy an existing all-platform release build into dist"
+    )
     return parser
 
 
@@ -360,6 +396,8 @@ def main() -> None:
     arguments = _parser().parse_args()
     if arguments.command == "build-bot":
         build_bot(release=arguments.release, build_all=arguments.all)
+    elif arguments.command == "dist":
+        dist()
 
 
 if __name__ == "__main__":
