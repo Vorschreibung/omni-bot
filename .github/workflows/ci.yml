@@ -1,0 +1,43 @@
+name: Pixi build
+
+on:
+  push:
+    branches: ["stable"]
+  pull_request:
+    branches: ["stable"]
+
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux-64
+            os: ubuntu-latest
+
+          - platform: win-64
+            os: windows-latest
+
+          - platform: osx-64
+            os: macos-15-intel
+
+          - platform: osx-arm64
+            os: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: prefix-dev/setup-pixi@v0.10.2
+        with:
+          pixi-version: v0.81.0
+
+          # cache: true
+          # run-install: true
+
+      - name: Build
+        run: pixi run --platform ${{ matrix.platform }} dev build-bot
