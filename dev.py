@@ -11,7 +11,6 @@ from pathlib import Path
 import shutil
 import struct
 import subprocess
-import sys
 
 
 ROOT = Path(__file__).resolve().parent
@@ -155,9 +154,6 @@ def _configure_bot_build(
     *, release: bool, target: BotBuildTarget, build_rtcw: bool
 ) -> Path:
     """Configure one Zig bot build through CMake."""
-    if not sys.platform.startswith("linux"):
-        raise RuntimeError("Zig bot cross builds currently require Linux")
-
     build_mode = "release" if release else "debug"
     build_directory = BUILD_ROOT / f"cmake-{build_mode}-{target.name}"
     build_type = "Release" if release else "RelWithDebInfo"
