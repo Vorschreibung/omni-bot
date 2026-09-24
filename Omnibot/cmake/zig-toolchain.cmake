@@ -34,11 +34,15 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     add_compile_definitions(PHYSFS_FORCE_UNIX)
 endif ()
 
-# CMake archive rules require a single executable, so small wrappers expose
-# Zig's multicall archive tools using the conventional command-line shape.
-set(CMAKE_AR "${CMAKE_CURRENT_LIST_DIR}/zig-ar")
-set(CMAKE_RANLIB "${CMAKE_CURRENT_LIST_DIR}/zig-ranlib")
-set(CMAKE_STRIP "${CMAKE_CURRENT_LIST_DIR}/zig-strip")
+# Call Zig's archive subcommands from CMake's command templates so the same
+# toolchain works on hosts that cannot execute the POSIX wrapper scripts.
+set(CMAKE_AR zig)
+set(CMAKE_RANLIB zig)
+foreach(language C CXX)
+    set(CMAKE_${language}_ARCHIVE_CREATE "<CMAKE_AR> ar qc <TARGET> <LINK_FLAGS> <OBJECTS>")
+    set(CMAKE_${language}_ARCHIVE_APPEND "<CMAKE_AR> ar q <TARGET> <LINK_FLAGS> <OBJECTS>")
+    set(CMAKE_${language}_ARCHIVE_FINISH "<CMAKE_RANLIB> ranlib <TARGET>")
+endforeach()
 
 # Cross-compiled configure probes can be compiled but not run on the host.
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
