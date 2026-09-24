@@ -24,7 +24,15 @@ set(CMAKE_C_COMPILER_TARGET "${OMNIBOT_ZIG_TARGET}")
 set(CMAKE_CXX_COMPILER zig)
 set(CMAKE_CXX_COMPILER_ARG1 c++)
 set(CMAKE_CXX_COMPILER_TARGET "${OMNIBOT_ZIG_TARGET}")
-set(CMAKE_CXX_FLAGS_INIT "-stdlib=libc++")
+# Zig selects its bundled libc++ automatically for MinGW targets.
+if (NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    set(CMAKE_CXX_FLAGS_INIT "-stdlib=libc++")
+endif ()
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    # The source compatibility switch selects PhysicsFS's portable Unix backend.
+    add_compile_definitions(PHYSFS_FORCE_UNIX)
+endif ()
 
 # CMake archive rules require a single executable, so small wrappers expose
 # Zig's multicall archive tools using the conventional command-line shape.

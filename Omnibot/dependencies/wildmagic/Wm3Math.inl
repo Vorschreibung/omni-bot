@@ -141,7 +141,8 @@ template <class Real>
 void Math<Real>::SinCos(Real a, Real &s, Real &c)
 {
 
-#if	defined(_WIN32) && !(defined(_M_X64))
+/* Clang cannot infer the operand size used by the legacy MSVC inline assembly. */
+#if defined(_MSC_VER) && !defined(__clang__) && defined(_M_IX86)
 	_asm 
 	{
 		fld		a

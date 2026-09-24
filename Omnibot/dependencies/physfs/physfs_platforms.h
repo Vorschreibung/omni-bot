@@ -12,7 +12,11 @@
  *  PHYSFS_PLATFORM_UNIX on that system.
  */
 
-#if (defined __HAIKU__)
+#if (defined PHYSFS_FORCE_UNIX)
+/* Cross-built macOS modules do not need the disabled optical-disc backend. */
+#  define PHYSFS_PLATFORM_UNIX
+#  define PHYSFS_PLATFORM_POSIX
+#elif (defined __HAIKU__)
 #  define PHYSFS_PLATFORM_HAIKU
 #  define PHYSFS_PLATFORM_BEOS
 #  define PHYSFS_PLATFORM_POSIX
@@ -46,4 +50,3 @@
 #endif
 
 #endif  /* include-once blocker. */
-

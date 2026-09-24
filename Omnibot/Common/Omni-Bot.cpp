@@ -35,6 +35,7 @@ typedef struct tagTHREADNAME_INFO
 
 void SetThreadName( DWORD dwThreadID, char* threadName)
 {
+#ifdef _MSC_VER
 	Sleep(10);
 	THREADNAME_INFO info;
 	info.dwType = 0x1000;
@@ -49,6 +50,11 @@ void SetThreadName( DWORD dwThreadID, char* threadName)
 	__except(EXCEPTION_EXECUTE_HANDLER)
 	{
 	}
+#else
+	// The debugger-only MSVC exception syntax is unavailable to MinGW targets.
+	(void)dwThreadID;
+	(void)threadName;
+#endif
 }
 #endif
 

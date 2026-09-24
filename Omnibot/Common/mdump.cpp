@@ -19,12 +19,12 @@ String		g_AppName;
 #ifndef NOIME
 #define NOIME
 #endif
-#include <Windows.h>
+#include <windows.h>
 #include <assert.h>
 #include <tchar.h>
 #include <stdio.h>
 
-#if _MSC_VER < 1300
+#if defined(_MSC_VER) && _MSC_VER < 1300
 #define DECLSPEC_DEPRECATED
 // VC6: change this path to your Platform SDK headers
 #include "M:\\dev7\\vs\\devtools\\common\\win32sdk\\include\\dbghelp.h"			// must be XP version of file

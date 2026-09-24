@@ -6,7 +6,7 @@
 //#include <stdio.h>
 
 #ifdef WIN32
-#include <Windows.h>
+#include <windows.h>
 BOOL APIENTRY DllMain( HANDLE , DWORD ul_reason_for_call, LPVOID )
 {
 	switch (ul_reason_for_call)

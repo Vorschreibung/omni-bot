@@ -15,6 +15,18 @@ endmacro()
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+if (OMNIBOT_ZIG_TARGET)
+    # Zig's bundled libc++ emits nullability completeness diagnostics on
+    # Windows and macOS that do not identify issues in Omni-bot itself.
+    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wno-nullability-completeness>")
+endif ()
+
+if (WIN32)
+    # The legacy sources test WIN32 and require lean Windows headers to avoid
+    # collisions such as the PlaySound macro with bot API function names.
+    add_compile_definitions(WIN32 WIN32_LEAN_AND_MEAN NOMINMAX)
+endif ()
+
 # MSVC static runtime linkage
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
@@ -73,8 +85,8 @@ set(
 )
 set(BOOST_RUNTIME_LINK static)
 set(BOOST_SKIP_INSTALL_RULES ON)
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND OMNIBOT_TARGET_ARCH STREQUAL "x86")
-    # The legacy release ABI predates the glibc getrandom wrapper.
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # Both release glibc baselines predate the getrandom wrapper.
     set(BOOST_FILESYSTEM_DISABLE_GETRANDOM ON CACHE BOOL "" FORCE)
 endif ()
 FetchContent_Declare(

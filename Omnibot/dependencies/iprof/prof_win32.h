@@ -12,7 +12,10 @@ typedef __int64 Prof_Int64;
 #endif
       void Prof_get_timestamp(Prof_Int64 *result)
       {
-#ifndef _M_X64 // cs: TODO: 64bit support
+#if defined(__clang__)
+         /* Zig's Clang frontend exposes the cycle counter without MSVC assembly. */
+         *result = (Prof_Int64)__builtin_readcyclecounter();
+#elif !defined(_M_X64) // cs: TODO: 64bit support
          __asm {
             rdtsc;
             mov    ebx, result

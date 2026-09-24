@@ -2,7 +2,6 @@
 
 file(GLOB COMMON_SRC CONFIGURE_DEPENDS
     ${DEPENDENCIES_PATH}/gmscriptex/gmsrc_ex/src/gm/*.cpp
-    ${DEPENDENCIES_PATH}/gmscriptex/gmsrc_ex/src/platform/win32gcc/*.cpp
     ${DEPENDENCIES_PATH}/gmscriptex/gmsrc_ex/src/binds/*.cpp
     ${DEPENDENCIES_PATH}/gmscriptex/gmsrc_ex/src/binds/gmSqliteLib.cpp
     ${DEPENDENCIES_PATH}/gmscriptex/gmsrc_ex/src/3rdParty/mathlib/*.cpp
@@ -25,6 +24,22 @@ file(GLOB COMMON_SRC CONFIGURE_DEPENDS
     # ${CMAKE_CURRENT_SOURCE_DIR}/RecastInterfaces.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/BatchBuild.cpp
 )
+
+# GameMonkey has one timer implementation per target platform.
+if (WIN32 AND MSVC)
+    file(GLOB GM_PLATFORM_SRC CONFIGURE_DEPENDS
+        ${DEPENDENCIES_PATH}/gmscriptex/gmsrc_ex/src/platform/win32msvc/*.cpp
+    )
+elseif (APPLE)
+    file(GLOB GM_PLATFORM_SRC CONFIGURE_DEPENDS
+        ${DEPENDENCIES_PATH}/gmscriptex/gmsrc_ex/src/platform/osx/*.cpp
+    )
+else ()
+    file(GLOB GM_PLATFORM_SRC CONFIGURE_DEPENDS
+        ${DEPENDENCIES_PATH}/gmscriptex/gmsrc_ex/src/platform/win32gcc/*.cpp
+    )
+endif ()
+list(APPEND COMMON_SRC ${GM_PLATFORM_SRC})
 
 list(FILTER COMMON_SRC EXCLUDE REGEX ".*gmSqliteLib\\.cpp$")
 
@@ -86,8 +101,19 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
 endif ()
 
 if(APPLE)
-    find_library(CARBON_FW Carbon)
+    set(OMNIBOT_MACOS_STUBS "${CMAKE_SOURCE_DIR}/cmake/macos-sdk")
+    find_library(CARBON_FW Carbon PATHS "${OMNIBOT_MACOS_STUBS}" NO_DEFAULT_PATH)
     target_link_libraries(omnibot-common PUBLIC ${CARBON_FW})
-    find_library(IOKIT_FW IOKit)
+    find_library(IOKIT_FW IOKit PATHS "${OMNIBOT_MACOS_STUBS}" NO_DEFAULT_PATH)
     target_link_libraries(omnibot-common PUBLIC ${IOKIT_FW})
+    target_link_options(
+        omnibot-common
+        PUBLIC
+            "-F${OMNIBOT_MACOS_STUBS}"
+            "-L${OMNIBOT_MACOS_STUBS}/usr/lib"
+            "LINKER:-needed_framework,ApplicationServices"
+            "LINKER:-needed_framework,CoreFoundation"
+            "LINKER:-needed_framework,CoreServices"
+            "LINKER:-needed_library,omnibot-libcxx"
+    )
 endif()
