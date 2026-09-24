@@ -14,12 +14,20 @@ project(
 # Standalone mode makes the vendored Boost.Regex implementation header-only.
 boost_regex_dependency = declare_dependency(
     include_directories: include_directories('dependencies/boost-regex/include'),
-    compile_args: '-DBOOST_REGEX_STANDALONE',
+    compile_args: [
+        '-DBOOST_REGEX_STANDALONE',
+        # dev.py exposes only the host Boost tree, not incompatible host libc headers.
+        '-isystem',
+        meson.project_build_root() / 'host-include',
+    ],
 )
 
 common_arguments = ['-fno-strict-aliasing']
 if host_machine.system() == 'linux'
     common_arguments += '-D__linux__'
+elif host_machine.system() == 'windows'
+    # The legacy sources use WIN32 in addition to the compiler-provided _WIN32.
+    common_arguments += '-DWIN32'
 endif
 add_project_arguments(common_arguments, language: ['c', 'cpp'])
 # Omni-bot intentionally embeds its build timestamp in IGame::GetVersion().
@@ -38,6 +46,15 @@ if host_machine.system() == 'linux'
     physfs_c_arguments += ['-include', 'alloca.h']
 endif
 
+gm_platform_include = 'dependencies/gmscriptex/gmsrc_ex/src/platform/win32gcc'
+gm_platform_timer = 'dependencies/gmscriptex/gmsrc_ex/src/platform/win32gcc/gmPlatformTimer.cpp'
+if host_machine.system() == 'windows'
+    gm_platform_include = 'dependencies/gmscriptex/gmsrc_ex/src/platform/win32msvc'
+    gm_platform_timer = 'dependencies/gmscriptex/gmsrc_ex/src/platform/win32msvc/gmPlatformTimer.cpp'
+elif host_machine.system() == 'darwin'
+    gm_platform_include = 'dependencies/gmscriptex/gmsrc_ex/src/platform/osx'
+endif
+
 omnibot_includes = include_directories(
     '.',
     'Common',
@@ -47,7 +64,7 @@ omnibot_includes = include_directories(
     'dependencies/gmscriptex/gmsrc_ex/src/gm',
     'dependencies/gmscriptex/gmsrc_ex/src/binds',
     'dependencies/gmscriptex/gmsrc_ex/src/3rdParty/gmbinder2',
-    'dependencies/gmscriptex/gmsrc_ex/src/platform/win32gcc',
+    gm_platform_include,
     'dependencies/physfs',
     'dependencies/physfs/lzma/C',
     'dependencies/physfs/lzma/C/Archive/7z',
@@ -55,6 +72,22 @@ omnibot_includes = include_directories(
     'dependencies/physfs/lzma/C/Compress/Branch',
     'dependencies/physfs/zlib123',
 )
+
+if host_machine.system() == 'darwin'
+    macos_stubs = meson.project_source_root() / 'meson' / 'macos-sdk'
+    # Zig ships macOS libc stubs but not the legacy frameworks used by release modules.
+    add_project_link_arguments(
+        '-F' + macos_stubs,
+        '-L' + (macos_stubs / 'usr' / 'lib'),
+        '-Wl,-needed_framework,ApplicationServices',
+        '-Wl,-needed_framework,Carbon',
+        '-Wl,-needed_framework,CoreFoundation',
+        '-Wl,-needed_framework,CoreServices',
+        '-Wl,-needed_framework,IOKit',
+        '-Wl,-needed_library,omnibot-libcxx',
+        language: ['c', 'cpp'],
+    )
+endif
 
 # Keep this list aligned with Common/Jamfile; BatchBuild.cpp supplies Omni-bot's unity sources.
 common_sources = files(
@@ -83,7 +116,7 @@ common_sources = files(
     'dependencies/gmscriptex/gmsrc_ex/src/gm/gmUserObject.cpp',
     'dependencies/gmscriptex/gmsrc_ex/src/gm/gmUtil.cpp',
     'dependencies/gmscriptex/gmsrc_ex/src/gm/gmVariable.cpp',
-    'dependencies/gmscriptex/gmsrc_ex/src/platform/win32gcc/gmPlatformTimer.cpp',
+    gm_platform_timer,
     'dependencies/gmscriptex/gmsrc_ex/src/binds/gmArrayLib.cpp',
     'dependencies/gmscriptex/gmsrc_ex/src/binds/gmCall.cpp',
     'dependencies/gmscriptex/gmsrc_ex/src/binds/gmEntity.cpp',
@@ -198,9 +231,15 @@ common_dependency = declare_dependency(
 )
 
 # The empty prefix and default platform suffix reproduce b2's module names on 32-bit Linux.
+et_sources = files('ET/ET_BatchBuild.cpp')
+if host_machine.system() == 'windows'
+    # Keep advapi32 in the module's import table, matching existing releases.
+    et_sources += files('meson/windows_dependency_anchor.c')
+endif
+
 shared_module(
     'omnibot_et',
-    'ET/ET_BatchBuild.cpp',
+    et_sources,
     name_prefix: '',
     dependencies: common_dependency,
     install: false,
