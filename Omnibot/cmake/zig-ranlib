@@ -1,0 +1,3 @@
+#!/bin/sh
+# Present Zig's ranlib subcommand as a regular ranlib executable for CMake.
+exec zig ranlib "$@"

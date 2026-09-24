@@ -75,6 +75,16 @@ if (UNIX)
     target_link_options(omnibot-common PUBLIC -pthread)
 endif ()
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # This bundled PhysicsFS version calls alloca without including its declaration.
+    target_compile_options(
+        omnibot-common
+        PRIVATE
+            "$<$<COMPILE_LANGUAGE:C>:-include>"
+            "$<$<COMPILE_LANGUAGE:C>:alloca.h>"
+    )
+endif ()
+
 if(APPLE)
     find_library(CARBON_FW Carbon)
     target_link_libraries(omnibot-common PUBLIC ${CARBON_FW})

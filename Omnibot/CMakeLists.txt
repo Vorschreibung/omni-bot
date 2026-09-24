@@ -22,18 +22,28 @@ option(OMNIBOT_ET "Build the Enemy Territory bots module" ON)
 option(OMNIBOT_RTCW "Build the Return to Castle Wolfenstein bots module" ON)
 
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSTEM_PROCESSOR_LOWER)
+set(OMNIBOT_TARGET_ARCH "")
+if (SYSTEM_PROCESSOR_LOWER MATCHES "^(amd64|x86_64)$")
+    set(OMNIBOT_TARGET_ARCH "x86_64")
+elseif (SYSTEM_PROCESSOR_LOWER MATCHES "^(x86|i[3-6]86)$")
+    set(OMNIBOT_TARGET_ARCH "x86")
+elseif (SYSTEM_PROCESSOR_LOWER MATCHES "^(aarch64|arm64)$")
+    set(OMNIBOT_TARGET_ARCH "aarch64")
+endif ()
+
+set(MODULE_SUFFIX "")
 if (APPLE)
     string(APPEND MODULE_SUFFIX "_mac")
-elseif (SYSTEM_PROCESSOR_LOWER MATCHES "(x86)|(amd64)")
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-        if (WIN32)
-            string(APPEND MODULE_SUFFIX "_x64")
-        else ()
-            string(APPEND MODULE_SUFFIX ".x86_64")
-        endif ()
+elseif (WIN32)
+    if (OMNIBOT_TARGET_ARCH STREQUAL "x86_64" OR CMAKE_SIZEOF_VOID_P EQUAL 8)
+        string(APPEND MODULE_SUFFIX "_x64")
     endif ()
-elseif (SYSTEM_PROCESSOR_LOWER STREQUAL "aarch64")
-    string(APPEND MODULE_SUFFIX ".aarch64")
+elseif (UNIX)
+    if (OMNIBOT_TARGET_ARCH STREQUAL "x86_64")
+        string(APPEND MODULE_SUFFIX ".x86_64")
+    elseif (OMNIBOT_TARGET_ARCH STREQUAL "aarch64")
+        string(APPEND MODULE_SUFFIX ".aarch64")
+    endif ()
 endif ()
 
 set(DEPENDENCIES_PATH "${CMAKE_SOURCE_DIR}/dependencies")
@@ -44,9 +54,29 @@ add_library(omni-shared INTERFACE)
 # Omni-bot. Header-only dependencies are discovered by Boost's CMake project.
 include(FetchContent)
 set(BUILD_SHARED_LIBS OFF)
-set(BOOST_INCLUDE_LIBRARIES filesystem regex date_time system)
+set(
+    BOOST_INCLUDE_LIBRARIES
+    algorithm
+    array
+    bind
+    date_time
+    dynamic_bitset
+    filesystem
+    interprocess
+    lexical_cast
+    multi_array
+    pool
+    regex
+    smart_ptr
+    static_assert
+    system
+)
 set(BOOST_RUNTIME_LINK static)
 set(BOOST_SKIP_INSTALL_RULES ON)
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux" AND OMNIBOT_TARGET_ARCH STREQUAL "x86")
+    # The legacy release ABI predates the glibc getrandom wrapper.
+    set(BOOST_FILESYSTEM_DISABLE_GETRANDOM ON CACHE BOOL "" FORCE)
+endif ()
 FetchContent_Declare(
     Boost
     URL https://github.com/boostorg/boost/releases/download/boost-1.92.0/boost-1.92.0-cmake.tar.gz
@@ -58,8 +88,18 @@ target_link_libraries(
     omni-shared
     INTERFACE
         Boost::headers
+        Boost::algorithm
+        Boost::array
+        Boost::bind
         Boost::filesystem
+        Boost::dynamic_bitset
+        Boost::interprocess
+        Boost::lexical_cast
+        Boost::multi_array
+        Boost::pool
         Boost::regex
+        Boost::smart_ptr
+        Boost::static_assert
         Boost::date_time
         Boost::system
 )
@@ -70,7 +110,14 @@ target_include_directories(omni-shared INTERFACE "${DEPENDENCIES_PATH}/WildMagic
 if (NOT WIN32)
     add_compile_options(-Wall -Wno-deprecated -fno-strict-aliasing)
 endif ()
+# Omni-bot intentionally embeds its build timestamp in IGame::GetVersion().
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wno-date-time>")
 add_compile_options("$<$<CONFIG:DEBUG>:-D_DEBUG>")
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    # Keep compiler and Zig runtime debug data out of release modules.
+    add_compile_options("$<$<CONFIG:Release>:-g0>")
+    add_link_options("$<$<CONFIG:Release>:-Wl,--strip-debug>")
+endif ()
 
 add_subdirectory(Common)
 

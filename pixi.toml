@@ -1,0 +1,16 @@
+[workspace]
+authors = ["Vorschreibung <vorschreibung@gmail.com>"]
+channels = ["conda-forge"]
+name = "omni-bot"
+platforms = ["linux-64", "win-64", "osx-64", "osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+dev = { cmd = ["python", "./dev.py"] }
+
+[dependencies]
+# Wildcard constraints keep explicit updates on the latest available toolchain.
+cmake = "*"
+ninja = "*"
+python = "*"
+zig = "*"

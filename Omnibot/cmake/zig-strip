@@ -1,0 +1,3 @@
+#!/bin/sh
+# Present Zig's strip subcommand as a regular strip executable for CMake.
+exec zig strip "$@"

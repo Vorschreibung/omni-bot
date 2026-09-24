@@ -1,0 +1,3 @@
+#!/bin/sh
+# Present Zig's archive subcommand as a regular ar executable for CMake.
+exec zig ar "$@"
