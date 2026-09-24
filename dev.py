@@ -19,6 +19,7 @@ PIXI_MANIFEST = ROOT / "pixi.toml"
 OMNIBOT_SOURCE = ROOT / "Omnibot"
 BUILD_ROOT = OMNIBOT_SOURCE / "build"
 RELEASE_FILES = ROOT / "Installer" / "Files" / "rtcw"
+DIST_DIRECTORY = ROOT / "dist"
 
 
 @dataclass(frozen=True)
@@ -108,6 +109,11 @@ ALL_BOT_TARGETS = (
         "omnibot_et.dll",
         windows_arch="x64",
     ),
+)
+DIST_FILES = (
+    "README.txt",
+    "changelog.txt",
+    *(target.output_name for target in ALL_BOT_TARGETS),
 )
 
 
@@ -637,6 +643,30 @@ def build_bot(*, release: bool, build_all: bool = False) -> None:
     )
 
 
+def dist() -> None:
+    """Copy an existing all-platform release build into the distribution tree."""
+    built_release = BUILD_ROOT / "omnibot-release"
+    missing = [name for name in DIST_FILES if not (built_release / name).is_file()]
+    if missing:
+        missing_files = ", ".join(missing)
+        raise RuntimeError(
+            f"release artifacts are missing: {missing_files}; "
+            "run './dev.py build-bot --all --release' first"
+        )
+
+    if DIST_DIRECTORY.is_symlink() or (
+        DIST_DIRECTORY.exists() and not DIST_DIRECTORY.is_dir()
+    ):
+        raise RuntimeError(f"distribution path is not a directory: {DIST_DIRECTORY}")
+    if DIST_DIRECTORY.exists():
+        # Recreate the package so stale artifacts cannot leak into a release.
+        shutil.rmtree(DIST_DIRECTORY)
+    DIST_DIRECTORY.mkdir()
+    for name in DIST_FILES:
+        shutil.copy2(built_release / name, DIST_DIRECTORY / name)
+    print(f"Distribution is in {DIST_DIRECTORY}")
+
+
 def test_bot() -> None:
     """Build and run the 32-bit Linux behavior tests through Meson."""
     meson_build, build_environment = _configure_bot_build(
@@ -667,6 +697,9 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="build optimized modules without debug information",
     )
+    subcommands.add_parser(
+        "dist", help="copy an existing all-platform release build into dist"
+    )
     subcommands.add_parser("test", help="run the 32-bit Linux behavior tests")
     return parser
 
@@ -676,6 +709,8 @@ def main() -> None:
     arguments = _parser().parse_args()
     if arguments.command == "build-bot":
         build_bot(release=arguments.release, build_all=arguments.all)
+    elif arguments.command == "dist":
+        dist()
     elif arguments.command == "test":
         test_bot()
 

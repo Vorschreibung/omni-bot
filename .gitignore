@@ -9,6 +9,7 @@
 /Installer/Files/rtcw/scripts/rtcw_autoexec_user.gm
 /Omnibot/CMakeFiles
 /Omnibot/CMakeCache.txt
+/dist/
 # pixi environments
 .pixi/*
 !.pixi/config.toml
