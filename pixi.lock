@@ -181,9 +181,9 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/vc-14.5-ha367084_41.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/vc14_runtime-14.51.36247-habf1de7_41.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/vcomp14-14.51.36247-habf1de7_41.conda
-      - conda: https://conda.anaconda.org/conda-forge/win-64/zig-0.16.0-h8b992aa_19.conda
-      - conda: https://conda.anaconda.org/conda-forge/win-64/zig_impl_win-64-0.16.0-h66d57dd_19.conda
-      - conda: https://conda.anaconda.org/conda-forge/win-64/zig_win-64-0.16.0-h4b8a977_19.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/zig-0.15.2-h61c079f_30.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/zig_impl_win-64-0.15.2-h09a9979_30.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/zig_win-64-0.15.2-h4032402_30.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/zstd-1.5.7-h534d264_7.conda
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
@@ -2223,41 +2223,42 @@ packages:
     - vcomp14 >=14.51.36247
   size: 155910
   timestamp: 1785359349999
-- conda: https://conda.anaconda.org/conda-forge/win-64/zig-0.16.0-h8b992aa_19.conda
-  sha256: 045a68971f61594a97329440d3e80595b58635a41daabe7585a5e38161df897c
-  md5: 08aed7ad8761e4f687db463567c5f53e
+- conda: https://conda.anaconda.org/conda-forge/win-64/zig-0.15.2-h61c079f_30.conda
+  sha256: c5a4ee15ec28342185a37bb4c9af7d4957b830da5a593b31901aff30440016bf
+  md5: 1722e7392545ca6b7bbc4af6c4659f04
   depends:
-  - zig_win-64 ==0.16.0 h4b8a977_19
-  license: MIT AND Apache-2.0 WITH LLVM-exception AND Apache-2.0 AND LGPL-2.1-or-later AND BSD-2-Clause AND BSD-3-Clause AND ZPL-2.1 AND LicenseRef-Public-Domain
+  - zig_win-64 ==0.15.2 h4032402_30
+  license: MIT AND LicenseRef-Public-Domain
   run_exports:
     weak:
-    - zig >=0.16.0,<0.16.1.0a0
-  size: 203974
-  timestamp: 1790272370750
-- conda: https://conda.anaconda.org/conda-forge/win-64/zig_impl_win-64-0.16.0-h66d57dd_19.conda
-  sha256: f69d768ac75f010be40769df73394f9fda96aa9e90dacb4a71070ac62e2f833c
-  md5: 411bffa3e8d6d52f6612a446d079b923
+    - zig >=0.15.2,<0.15.3.0a0
+  size: 129074
+  timestamp: 1783215636092
+- conda: https://conda.anaconda.org/conda-forge/win-64/zig_impl_win-64-0.15.2-h09a9979_30.conda
+  sha256: f0f17c2db000c4218f4f9ec2695d766e54c469c9a030b651929b02d9dcfe42a9
+  md5: 85322a6795399b095fd2ccfd6472bd23
   depends:
   - vc >=14.3,<15
-  - vc14_runtime >=14.44.35208
-  - ucrt >=10.0.20348.0
   - libzlib >=1.3.2,<2.0a0
   - zstd >=1.5.7,<1.6.0a0
   - libxml2
-  - libxml2-16 >=2.15.4
-  license: MIT AND Apache-2.0 WITH LLVM-exception AND Apache-2.0 AND LGPL-2.1-or-later AND BSD-2-Clause AND BSD-3-Clause AND ZPL-2.1 AND LicenseRef-Public-Domain
+  - libxml2-16 >=2.14.6
+  license: MIT AND LicenseRef-Public-Domain
   run_exports: {}
-  size: 107923707
-  timestamp: 1790272370750
-- conda: https://conda.anaconda.org/conda-forge/win-64/zig_win-64-0.16.0-h4b8a977_19.conda
-  sha256: f39a59e1c5b0a8f285d5e1a605c4d870a79f6838278821315c8bd2240233a017
-  md5: d96a3ff6a4adf267ef251abe9b5a70c4
+  size: 103178276
+  timestamp: 1783215636092
+- conda: https://conda.anaconda.org/conda-forge/win-64/zig_win-64-0.15.2-h4032402_30.conda
+  sha256: 8feff4f759e911b6966e1591d868a3675f1ddc247a918d8f453f5f6565f5372b
+  md5: 90dc8525ea485c3e1cc33d607b8ccc53
   depends:
-  - zig_impl_win-64 ==0.16.0 h66d57dd_19
-  license: MIT AND Apache-2.0 WITH LLVM-exception AND Apache-2.0 AND LGPL-2.1-or-later AND BSD-2-Clause AND BSD-3-Clause AND ZPL-2.1 AND LicenseRef-Public-Domain
+  - zig_impl_win-64 ==0.15.2 h09a9979_30
+  - vc >=14.3,<15
+  - vc14_runtime >=14.44.35208
+  - ucrt >=10.0.20348.0
+  license: MIT AND LicenseRef-Public-Domain
   run_exports: {}
-  size: 412217
-  timestamp: 1790272370750
+  size: 145257
+  timestamp: 1783215636092
 - conda: https://conda.anaconda.org/conda-forge/win-64/zstd-1.5.7-h534d264_7.conda
   sha256: ca7daae4f218a11fab82cc2857f0ea518ec3f46acec60490485347a4c22c6b3e
   md5: e4ac308c39d6d0e131154976da67cf3b

@@ -11,6 +11,7 @@ from pathlib import Path
 import shutil
 import struct
 import subprocess
+import tempfile
 
 
 ROOT = Path(__file__).resolve().parent
@@ -147,7 +148,13 @@ def _run_in_pixi(
 
 def _build_environment() -> dict[str, str]:
     """Return the shared Zig cache configuration for build subprocesses."""
-    return {"ZIG_GLOBAL_CACHE_DIR": str(BUILD_ROOT / ".zig-cache")}
+    if os.name == "nt":
+        # Keep the Windows cache path short because cold Zig cross-links can
+        # panic while creating bundled libc and libc++ runtime artifacts.
+        cache_directory = Path(tempfile.gettempdir()) / "zig-cache"
+    else:
+        cache_directory = BUILD_ROOT / ".zig-cache"
+    return {"ZIG_GLOBAL_CACHE_DIR": str(cache_directory)}
 
 
 def _configure_bot_build(

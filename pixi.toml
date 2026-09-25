@@ -14,3 +14,7 @@ cmake = "*"
 ninja = "*"
 python = "*"
 zig = "*"
+
+[target.win-64.dependencies]
+# Zig 0.16.0 panics during cold Linux C++ cross-links on Windows hosts.
+zig = "0.15.2.*"
