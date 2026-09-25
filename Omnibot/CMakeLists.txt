@@ -3,6 +3,14 @@ cmake_policy(SET CMP0091 NEW)
 
 project(Omnibot VERSION 0.93 LANGUAGES C CXX)
 
+# Zig 0.16 can corrupt its shared runtime cache when Windows starts multiple
+# cross-link processes concurrently. Keep compilation parallel but serialize
+# link commands that use this toolchain on Windows hosts.
+if (CMAKE_HOST_WIN32 AND OMNIBOT_ZIG_TARGET)
+    set_property(GLOBAL PROPERTY JOB_POOLS omnibot_zig_link=1)
+    set(CMAKE_JOB_POOL_LINK omnibot_zig_link)
+endif ()
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
