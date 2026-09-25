@@ -13,4 +13,7 @@ dev = { cmd = ["python", "./dev.py"] }
 cmake = "*"
 ninja = "*"
 python = "*"
-zig = "*"
+# FIXME: Zig 0.16.0 currently causes issues:
+#   - cannot create static archives on Intel macOS hosts.
+#   - panics during cold Linux C++ cross-links on Windows hosts.
+zig = "0.15.2.*"
