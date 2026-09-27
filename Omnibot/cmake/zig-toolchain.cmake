@@ -49,12 +49,10 @@ endif ()
 # toolchain works on hosts that cannot execute the POSIX wrapper scripts.
 set(CMAKE_AR "${OMNIBOT_ZIG_EXECUTABLE}")
 set(CMAKE_RANLIB "${OMNIBOT_ZIG_EXECUTABLE}")
-foreach(language C CXX)
-    # Replace mode creates a missing archive consistently across Zig host builds.
-    set(CMAKE_${language}_ARCHIVE_CREATE "<CMAKE_AR> ar rcs <TARGET> <LINK_FLAGS> <OBJECTS>")
-    set(CMAKE_${language}_ARCHIVE_APPEND "<CMAKE_AR> ar r <TARGET> <LINK_FLAGS> <OBJECTS>")
-    set(CMAKE_${language}_ARCHIVE_FINISH "<CMAKE_RANLIB> ranlib <TARGET>")
-endforeach()
+
+# Windows-GNU replaces archive commands while initializing each language, so
+# apply the Zig-specific forms through CMake's post-platform override hook.
+set(CMAKE_USER_MAKE_RULES_OVERRIDE "${CMAKE_CURRENT_LIST_DIR}/zig-toolchain-rules.cmake")
 
 # Cross-compiled configure probes can be compiled but not run on the host.
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
