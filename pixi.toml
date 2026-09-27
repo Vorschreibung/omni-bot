@@ -10,9 +10,9 @@ dev = { cmd = ["python", "./dev.py"] }
 
 [dependencies]
 # Wildcard constraints keep explicit updates on the latest available toolchain.
-cmake = "*"
-ninja = "*"
-python = "*"
+cmake = "4.4.3.*"
+ninja = "1.13.2.*"
+python = "3.14.7.*"
 # FIXME: Zig 0.16.0 currently causes issues:
 #   - cannot create static archives on Intel macOS hosts.
 #   - panics during cold Linux C++ cross-links on Windows hosts.
