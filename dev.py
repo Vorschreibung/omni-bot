@@ -11,6 +11,8 @@ from pathlib import Path
 import shutil
 import struct
 import subprocess
+import sys
+from typing import TextIO
 
 
 ROOT = Path(__file__).resolve().parent
@@ -26,6 +28,36 @@ RELEASE_FILES = ROOT / "Installer" / "Files" / "rtcw"
 DIST_DIRECTORY = Path(
     os.environ.get("OMNIBOT_DIST_DIRECTORY", ROOT / "dist")
 ).resolve()
+
+
+def _supports_color(stream: TextIO) -> bool:
+    """Return whether ANSI color output is appropriate for the stream."""
+    isatty = getattr(stream, "isatty", None)
+    return (
+        callable(isatty)
+        and isatty()
+        and os.environ.get("TERM") != "dumb"
+        and "NO_COLOR" not in os.environ
+    )
+
+
+_STDOUT_COLOR = _supports_color(sys.stdout)
+_STDERR_COLOR = _supports_color(sys.stderr)
+
+
+def _print(
+    *values: object,
+    sep: str = " ",
+    end: str = "\n",
+    file: TextIO | None = None,
+    flush: bool = False,
+) -> None:
+    """Print a development message with the canonical prefix."""
+    stream = sys.stdout if file is None else file
+    use_color = _STDOUT_COLOR if stream is sys.stdout else _STDERR_COLOR
+
+    header = "\x1b[34m[dev]\x1b[0m" if use_color else "[dev]"
+    print(header, *values, sep=sep, end=end, file=stream, flush=flush)
 
 
 @dataclass(frozen=True)
@@ -142,6 +174,7 @@ def _run_in_pixi(
     if environment:
         child_environment.update(environment)
 
+    _print("+", *command)
     subprocess.run(invocation, cwd=ROOT, env=child_environment, check=True)
 
 
@@ -320,7 +353,7 @@ def _build_all_bots(*, release: bool, no_warnings: bool) -> Path:
     # Package the same user-facing metadata as the established bot release.
     shutil.copy2(RELEASE_FILES / "readme.txt", output_directory / "README.txt")
     shutil.copy2(RELEASE_FILES / "changelog.txt", output_directory / "changelog.txt")
-    print(f"All bot modules are in {output_directory}")
+    _print(f"All bot modules are in {output_directory}")
     return output_directory
 
 
@@ -367,9 +400,9 @@ def clean() -> None:
 
     if BUILD_ROOT.exists():
         shutil.rmtree(BUILD_ROOT)
-        print(f"Removed build files in {BUILD_ROOT}")
+        _print(f"Removed build files in {BUILD_ROOT}")
     else:
-        print(f"No build files found in {BUILD_ROOT}")
+        _print(f"No build files found in {BUILD_ROOT}")
 
 
 def dist() -> None:
@@ -393,7 +426,7 @@ def dist() -> None:
     DIST_DIRECTORY.mkdir(parents=True)
     for name in DIST_FILES:
         shutil.copy2(built_release / name, DIST_DIRECTORY / name)
-    print(f"Distribution is in {DIST_DIRECTORY}")
+    _print(f"Distribution is in {DIST_DIRECTORY}")
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -410,18 +443,24 @@ def _parser() -> argparse.ArgumentParser:
         help="cross-build ET modules for every release platform",
     )
     build_bot_parser.add_argument(
+        "-r",
         "--release",
         action="store_true",
         help="build optimized modules without debug information",
     )
     build_bot_parser.add_argument(
+        "-nw",
         "--no-warnings",
         action="store_true",
         help="suppress all compiler warnings",
     )
-    subcommands.add_parser("clean", help="remove generated build files")
     subcommands.add_parser(
-        "dist", help="copy an existing all-platform release build into dist"
+        "clean",
+        help="remove generated build files",
+    )
+    subcommands.add_parser(
+        "dist",
+        help="copy an existing all-platform release build into dist",
     )
     return parser
 
@@ -442,4 +481,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        _print("Interrupted.", file=sys.stderr)
+        raise SystemExit(130) from None
