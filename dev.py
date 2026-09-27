@@ -339,6 +339,28 @@ def build_bot(*, release: bool, build_all: bool = False) -> None:
     )
 
 
+def clean() -> None:
+    """Remove generated build files without touching packaged distributions."""
+    filesystem_root = Path(BUILD_ROOT.anchor)
+    default_build_root = (OMNIBOT_SOURCE / "build").resolve()
+    is_repository_path = BUILD_ROOT == ROOT or ROOT in BUILD_ROOT.parents
+    is_build_path = (
+        BUILD_ROOT == default_build_root or default_build_root in BUILD_ROOT.parents
+    )
+    if (
+        BUILD_ROOT == filesystem_root
+        or BUILD_ROOT in ROOT.parents
+        or (is_repository_path and not is_build_path)
+    ):
+        raise RuntimeError(f"refusing to clean unsafe build root: {BUILD_ROOT}")
+
+    if BUILD_ROOT.exists():
+        shutil.rmtree(BUILD_ROOT)
+        print(f"Removed build files in {BUILD_ROOT}")
+    else:
+        print(f"No build files found in {BUILD_ROOT}")
+
+
 def dist() -> None:
     """Copy an existing all-platform release build into the distribution tree."""
     built_release = BUILD_ROOT / "omnibot-release"
@@ -381,6 +403,7 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="build optimized modules without debug information",
     )
+    subcommands.add_parser("clean", help="remove generated build files")
     subcommands.add_parser(
         "dist", help="copy an existing all-platform release build into dist"
     )
@@ -392,6 +415,8 @@ def main() -> None:
     arguments = _parser().parse_args()
     if arguments.command == "build-bot":
         build_bot(release=arguments.release, build_all=arguments.all)
+    elif arguments.command == "clean":
+        clean()
     elif arguments.command == "dist":
         dist()
 
