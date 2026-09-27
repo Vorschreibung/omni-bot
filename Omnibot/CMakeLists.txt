@@ -32,6 +32,16 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 option(OMNIBOT_ET "Build the Enemy Territory bots module" ON)
 option(OMNIBOT_RTCW "Build the Return to Castle Wolfenstein bots module" ON)
+option(OMNIBOT_NO_WARNINGS "Suppress all compiler warnings" OFF)
+
+if (OMNIBOT_NO_WARNINGS)
+    # Keep errors visible while silencing diagnostics from the legacy sources.
+    if (MSVC)
+        add_compile_options(/w)
+    else ()
+        add_compile_options(-w)
+    endif ()
+endif ()
 
 string(TOLOWER "${CMAKE_SYSTEM_PROCESSOR}" SYSTEM_PROCESSOR_LOWER)
 set(OMNIBOT_TARGET_ARCH "")

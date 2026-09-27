@@ -151,7 +151,7 @@ def _build_environment() -> dict[str, str]:
 
 
 def _configure_bot_build(
-    *, release: bool, target: BotBuildTarget, build_rtcw: bool
+    *, release: bool, target: BotBuildTarget, build_rtcw: bool, no_warnings: bool
 ) -> Path:
     """Configure one Zig bot build through CMake."""
     build_mode = "release" if release else "debug"
@@ -169,6 +169,7 @@ def _configure_bot_build(
         f"-DCMAKE_TOOLCHAIN_FILE={ZIG_TOOLCHAIN}",
         "-DOMNIBOT_ET=ON",
         f"-DOMNIBOT_RTCW={'ON' if build_rtcw else 'OFF'}",
+        f"-DOMNIBOT_NO_WARNINGS={'ON' if no_warnings else 'OFF'}",
         f"-DOMNIBOT_ZIG_SYSTEM_NAME={target.system_name}",
         f"-DOMNIBOT_ZIG_PROCESSOR={target.processor}",
         f"-DOMNIBOT_ZIG_TARGET={target.zig_target}",
@@ -177,12 +178,15 @@ def _configure_bot_build(
     return build_directory
 
 
-def _build_bot_target(*, release: bool, target: BotBuildTarget) -> Path:
+def _build_bot_target(
+    *, release: bool, target: BotBuildTarget, no_warnings: bool
+) -> Path:
     """Build one ET module and return its path in the CMake tree."""
     build_directory = _configure_bot_build(
         release=release,
         target=target,
         build_rtcw=False,
+        no_warnings=no_warnings,
     )
     _run_in_pixi(
         ["cmake", "--build", str(build_directory), "--target", "omnibot-et"],
@@ -293,14 +297,18 @@ def _conform_zig_elf_dependencies(path: Path, *, keep_loader: bool) -> None:
     path.write_bytes(data)
 
 
-def _build_all_bots(*, release: bool) -> Path:
+def _build_all_bots(*, release: bool, no_warnings: bool) -> Path:
     """Cross-build and collect all release-compatible ET modules."""
     build_mode = "release" if release else "debug"
     output_directory = BUILD_ROOT / f"omnibot-{build_mode}"
     output_directory.mkdir(parents=True, exist_ok=True)
 
     for target in ALL_BOT_TARGETS:
-        built_module = _build_bot_target(release=release, target=target)
+        built_module = _build_bot_target(
+            release=release,
+            target=target,
+            no_warnings=no_warnings,
+        )
         output_module = output_directory / target.output_name
         shutil.copy2(built_module, output_module)
         if target.system_name == "Linux":
@@ -316,15 +324,18 @@ def _build_all_bots(*, release: bool) -> Path:
     return output_directory
 
 
-def build_bot(*, release: bool, build_all: bool = False) -> None:
+def build_bot(
+    *, release: bool, build_all: bool = False, no_warnings: bool = False
+) -> None:
     """Build the legacy ET and RTCW bot modules through CMake."""
     if build_all:
-        _build_all_bots(release=release)
+        _build_all_bots(release=release, no_warnings=no_warnings)
         return
     build_directory = _configure_bot_build(
         release=release,
         target=LEGACY_BOT_TARGET,
         build_rtcw=True,
+        no_warnings=no_warnings,
     )
     _run_in_pixi(
         [
@@ -403,6 +414,11 @@ def _parser() -> argparse.ArgumentParser:
         action="store_true",
         help="build optimized modules without debug information",
     )
+    build_bot_parser.add_argument(
+        "--no-warnings",
+        action="store_true",
+        help="suppress all compiler warnings",
+    )
     subcommands.add_parser("clean", help="remove generated build files")
     subcommands.add_parser(
         "dist", help="copy an existing all-platform release build into dist"
@@ -414,7 +430,11 @@ def main() -> None:
     """Dispatch the requested development command."""
     arguments = _parser().parse_args()
     if arguments.command == "build-bot":
-        build_bot(release=arguments.release, build_all=arguments.all)
+        build_bot(
+            release=arguments.release,
+            build_all=arguments.all,
+            no_warnings=arguments.no_warnings,
+        )
     elif arguments.command == "clean":
         clean()
     elif arguments.command == "dist":
