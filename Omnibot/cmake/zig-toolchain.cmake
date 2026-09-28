@@ -19,6 +19,8 @@ endif ()
 list(
     APPEND
     CMAKE_TRY_COMPILE_PLATFORM_VARIABLES
+    OMNIBOT_MACOS_SYSROOT
+    OMNIBOT_ZIG_LIBSYSTEM
     OMNIBOT_ZIG_EXECUTABLE
     OMNIBOT_ZIG_SYSTEM_NAME
     OMNIBOT_ZIG_PROCESSOR
@@ -27,6 +29,59 @@ list(
 
 set(CMAKE_SYSTEM_NAME "${OMNIBOT_ZIG_SYSTEM_NAME}")
 set(CMAKE_SYSTEM_PROCESSOR "${OMNIBOT_ZIG_PROCESSOR}")
+
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+    set(OMNIBOT_MACOS_SDK "${CMAKE_CURRENT_LIST_DIR}/macos-sdk")
+    if (NOT EXISTS "${OMNIBOT_MACOS_SDK}/usr/lib/libomnibot-libcxx.tbd")
+        message(FATAL_ERROR "The reduced macOS SDK is missing its libc++ stub")
+    endif ()
+
+    if (OMNIBOT_ZIG_LIBSYSTEM AND NOT EXISTS "${OMNIBOT_ZIG_LIBSYSTEM}")
+        unset(OMNIBOT_ZIG_LIBSYSTEM CACHE)
+    endif ()
+    if (NOT OMNIBOT_ZIG_LIBSYSTEM)
+        set(OMNIBOT_ZIG_LIBRARY_PATHS "")
+        if (DEFINED ENV{ZIG_LIB_DIR} AND NOT "$ENV{ZIG_LIB_DIR}" STREQUAL "")
+            list(APPEND OMNIBOT_ZIG_LIBRARY_PATHS "$ENV{ZIG_LIB_DIR}/libc/darwin")
+        endif ()
+        if (DEFINED ENV{CONDA_PREFIX} AND NOT "$ENV{CONDA_PREFIX}" STREQUAL "")
+            list(
+                APPEND
+                OMNIBOT_ZIG_LIBRARY_PATHS
+                "$ENV{CONDA_PREFIX}/lib/zig/libc/darwin"
+                "$ENV{CONDA_PREFIX}/Library/lib/zig/libc/darwin"
+            )
+        endif ()
+        find_file(
+            OMNIBOT_ZIG_LIBSYSTEM
+            NAMES libSystem.tbd
+            PATHS ${OMNIBOT_ZIG_LIBRARY_PATHS}
+            NO_DEFAULT_PATH
+            REQUIRED
+        )
+    endif ()
+
+    if (NOT OMNIBOT_MACOS_SYSROOT)
+        set(
+            OMNIBOT_MACOS_SYSROOT
+            "${CMAKE_BINARY_DIR}/macos-sdk"
+            CACHE PATH
+            "Build-local macOS SDK overlay"
+        )
+    endif ()
+
+    # Zig's Darwin linker needs a real sysroot so absolute text-stub reexports
+    # never resolve against libraries from the host operating system.
+    file(COPY "${OMNIBOT_MACOS_SDK}/" DESTINATION "${OMNIBOT_MACOS_SYSROOT}")
+    file(MAKE_DIRECTORY "${OMNIBOT_MACOS_SYSROOT}/usr/lib")
+    file(
+        COPY_FILE
+        "${OMNIBOT_ZIG_LIBSYSTEM}"
+        "${OMNIBOT_MACOS_SYSROOT}/usr/lib/libSystem.tbd"
+        ONLY_IF_DIFFERENT
+    )
+    set(CMAKE_OSX_SYSROOT "${OMNIBOT_MACOS_SYSROOT}" CACHE PATH "" FORCE)
+endif ()
 
 set(CMAKE_C_COMPILER "${OMNIBOT_ZIG_EXECUTABLE}")
 set(CMAKE_C_COMPILER_ARG1 cc)

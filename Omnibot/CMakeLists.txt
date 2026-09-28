@@ -21,6 +21,21 @@ if (OMNIBOT_ZIG_TARGET)
     add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-Wno-nullability-completeness>")
 endif ()
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND OMNIBOT_ZIG_TARGET)
+    if (NOT CMAKE_OSX_SYSROOT)
+        message(FATAL_ERROR "CMAKE_OSX_SYSROOT is required for Zig macOS cross-links")
+    endif ()
+
+    # CMAKE_OSX_SYSROOT makes CMake pass -isysroot to the compiler driver, but
+    # Zig also needs its own --sysroot option. That populates Zig's linker
+    # sysroot, which is what makes target library-name lookups and absolute -L
+    # paths resolve inside the SDK rather than against the Linux host.
+    add_link_options("SHELL:--sysroot ${CMAKE_OSX_SYSROOT}")
+
+    # The Zig toolchain puts libSystem.tbd and the Omni-bot libc++ stub here.
+    add_link_options("-L/usr/lib")
+endif ()
+
 if (WIN32)
     # The legacy sources test WIN32 and require lean Windows headers to avoid
     # collisions such as the PlaySound macro with bot API function names.

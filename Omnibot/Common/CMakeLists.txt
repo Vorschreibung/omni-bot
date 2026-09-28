@@ -110,10 +110,24 @@ if(APPLE)
         omnibot-common
         PUBLIC
             "-F${OMNIBOT_MACOS_STUBS}"
-            "-L${OMNIBOT_MACOS_STUBS}/usr/lib"
             "LINKER:-needed_framework,ApplicationServices"
             "LINKER:-needed_framework,CoreFoundation"
             "LINKER:-needed_framework,CoreServices"
-            "LINKER:-needed_library,omnibot-libcxx"
     )
+    if (OMNIBOT_ZIG_TARGET)
+        # Zig misparses CMake's split -needed_library form. Forward the joined
+        # Darwin spelling directly and use the sysroot library path configured
+        # by the top-level project.
+        target_link_options(
+            omnibot-common
+            PUBLIC "-Wl,-needed-lomnibot-libcxx"
+        )
+    else ()
+        target_link_options(
+            omnibot-common
+            PUBLIC
+                "-L${OMNIBOT_MACOS_STUBS}/usr/lib"
+                "LINKER:-needed_library,omnibot-libcxx"
+        )
+    endif ()
 endif()
