@@ -24,6 +24,7 @@ BUILD_ROOT = Path(
 ).resolve()
 ZIG_TOOLCHAIN = OMNIBOT_SOURCE / "cmake" / "zig-toolchain.cmake"
 RELEASE_FILES = ROOT / "Installer" / "Files" / "rtcw"
+DIST_CHECKER = ROOT / "Tools" / "check-dist.py"
 # Tests and automation can redirect packaging away from the working tree.
 DIST_DIRECTORY = Path(
     os.environ.get("OMNIBOT_DIST_DIRECTORY", ROOT / "dist")
@@ -426,6 +427,15 @@ def dist() -> None:
     DIST_DIRECTORY.mkdir(parents=True)
     for name in DIST_FILES:
         shutil.copy2(built_release / name, DIST_DIRECTORY / name)
+
+    if not DIST_CHECKER.is_file():
+        raise RuntimeError(f"distribution checker is missing: {DIST_CHECKER}")
+    _print("+", DIST_CHECKER, DIST_DIRECTORY, flush=True)
+    subprocess.run(
+        [sys.executable, str(DIST_CHECKER), str(DIST_DIRECTORY)],
+        cwd=ROOT,
+        check=True,
+    )
     _print(f"Distribution is in {DIST_DIRECTORY}")
 
 
