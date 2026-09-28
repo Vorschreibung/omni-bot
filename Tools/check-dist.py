@@ -41,6 +41,18 @@ EXPECTED_DEPENDENCIES = {
     "omnibot_et.dll": frozenset(
         {
             "advapi32.dll",
+            "api-ms-win-crt-convert-l1-1-0.dll",
+            "api-ms-win-crt-environment-l1-1-0.dll",
+            "api-ms-win-crt-heap-l1-1-0.dll",
+            "api-ms-win-crt-locale-l1-1-0.dll",
+            "api-ms-win-crt-math-l1-1-0.dll",
+            "api-ms-win-crt-multibyte-l1-1-0.dll",
+            "api-ms-win-crt-private-l1-1-0.dll",
+            "api-ms-win-crt-runtime-l1-1-0.dll",
+            "api-ms-win-crt-stdio-l1-1-0.dll",
+            "api-ms-win-crt-string-l1-1-0.dll",
+            "api-ms-win-crt-time-l1-1-0.dll",
+            "api-ms-win-crt-utility-l1-1-0.dll",
             "kernel32.dll",
             "user32.dll",
         }
@@ -63,18 +75,25 @@ EXPECTED_DEPENDENCIES = {
     ),
     "omnibot_et_mac.so": frozenset(
         {
-            "/System/Library/Frameworks/ApplicationServices.framework/Versions/A/ApplicationServices",
-            "/System/Library/Frameworks/Carbon.framework/Versions/A/Carbon",
-            "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation",
-            "/System/Library/Frameworks/CoreServices.framework/Versions/A/CoreServices",
-            "/System/Library/Frameworks/IOKit.framework/Versions/A/IOKit",
             "/usr/lib/libSystem.B.dylib",
-            "/usr/lib/libc++.1.dylib",
         }
     ),
     "omnibot_et_x64.dll": frozenset(
         {
             "advapi32.dll",
+            "api-ms-win-core-synch-l1-2-0.dll",
+            "api-ms-win-crt-convert-l1-1-0.dll",
+            "api-ms-win-crt-environment-l1-1-0.dll",
+            "api-ms-win-crt-heap-l1-1-0.dll",
+            "api-ms-win-crt-locale-l1-1-0.dll",
+            "api-ms-win-crt-math-l1-1-0.dll",
+            "api-ms-win-crt-multibyte-l1-1-0.dll",
+            "api-ms-win-crt-private-l1-1-0.dll",
+            "api-ms-win-crt-runtime-l1-1-0.dll",
+            "api-ms-win-crt-stdio-l1-1-0.dll",
+            "api-ms-win-crt-string-l1-1-0.dll",
+            "api-ms-win-crt-time-l1-1-0.dll",
+            "api-ms-win-crt-utility-l1-1-0.dll",
             "kernel32.dll",
             "user32.dll",
         }
